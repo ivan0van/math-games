@@ -16,7 +16,6 @@ class Config(object):
     TASKS_UPLOAD_FOLDER = os.path.join(basedir, 'data', 'tasks_files')
 
 
-
 class Constants(object):
     DICT_OF_GAME_PAGES = {"domino": "domino.html", "penalty": "penalty.html"}
     DICT_OF_RIGHTS = {"author": "Игры", "user": "Команды"}

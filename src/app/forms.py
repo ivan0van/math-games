@@ -51,7 +51,7 @@ class SignUpStudentForm(FlaskForm):
     surname = StringField("Фамилия*", validators=[DATA_REQUIRED_VALIDATOR,
                                                   IS_NAME_VALIDATOR])
     last_name = StringField("Отчество*", validators=[DATA_REQUIRED_VALIDATOR,
-                                                    IS_NAME_VALIDATOR])
+                                                     IS_NAME_VALIDATOR])
     info = StringField("Дополнительная информация о Вас"
                        "(как с Вами можно связаться, "
                        "что Вы хотите рассказать о себе)")
