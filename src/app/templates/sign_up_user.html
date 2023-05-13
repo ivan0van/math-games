@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{# Страница регистрации #}
+
+{% block content %}
+    <h1>Регистрация</h1>
+    <p style="color: red">Все поля с знаком "*" обязательны для заполнения</p>
+    <p style="color: red">Фамилия, имя и отчество вводятся на русском языке с заглавной буквы;</p>
+    <p STYLE="color: red">Почта должна соответствовать формату
+        only@acceptable.format</p>
+    <p style="color: red">Запомните логин и пароль, эти данные необходимы для входа;</p>
+
+    <form method="post" novalidate>
+        <div>
+            {{ form.csrf_token }}
+        </div>
+
+        <div class="form-group">
+            {% for field in form if field.name != 'csrf_token' %}
+                {% if field.name == 'submit' %}
+                    {{ field(class="btn btn-primary") }}
+                {% else %}
+                    <div class="form-group">
+                    {{ field.label }}
+                    {{ field(class="form-control") }}
+                    </div>
+                {% endif %}
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                        <br>
+                        <div class="alert alert-danger" role="alert">
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        {# Предупреждение об используемом логине #}
+
+        {% if login_used %}
+            <div class="alert alert-danger" role="alert">
+                Этот логин уже используется. Введите другой, пожалуйста
+            </div>
+            <br>
+        {% endif %}
+
+
+
+
+    </form>
+    <br>
+{% endblock %}

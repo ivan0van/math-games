@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{# Шаблон для отображения страницы "Вход" #}
+
+{% block content %}
+    <h1>Вход</h1>
+    <form action="" method="post" novalidate>
+        {{ form.hidden_tag() }}
+
+        <p style="color: red">Необходимо ввести и логин, и пароль</p>
+
+        {# Логин #}
+        {{ form.login(class="form-control", placeholder=form.login.label.text) }}<br>
+        {% for error in form.login.errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endfor %}
+
+
+        {# Пароль #}
+        {{ form.password(class="form-control", placeholder=form.password.label.text) }}<br>
+        {% for error in form.password.errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endfor %}
+
+        {% if invalid_parameters %}
+            <div class="alert alert-danger" role="alert">
+                Неправильный логин или пароль
+            </div>
+        {% endif %}
+
+        <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+    </form>
+{% endblock %}

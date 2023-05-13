@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block content %}
+    {% if state == 'not started' %}
+        <h1 id="timer"></h1>
+        <script>
+            // Set the date we're counting down to
+            let countDownDate = new Date('{{start_time}}').getTime();
+            // Get todays date and time
+            let now = new Date('{{now_time}}').getTime();
+            // Update the count down every 1 second
+            let x = setInterval(function() {
+                // Find the distance between now an the count down date
+                let distance = countDownDate - now;
+
+                // Time calculations for days, hours, minutes and seconds
+                let days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                // Output the result in an element with id="demo"
+                let message = "Cоревнование начнётся через ";
+                if (days > 0){
+                    message += days + " д ";
+                }
+                message += hours + " ч "
+                + minutes + " мин " + seconds + " с";
+                document.getElementById("timer").innerHTML = message;
+                // If the count down is over, write some text
+                if (distance < 0) {
+                    clearInterval(x);
+                    document.getElementById("timer").innerHTML = "Соревнование началось, обновите страницу";
+                }
+                now += 1000;
+            }, 1000);
+        </script>
+    {% elif state == 'ended' %}
+        <h1>Соревнование уже закончилось</h1>
+    {% else %}
+        <h1 id="timer"></h1>
+        <script>
+            // Set the date we're counting down to
+            let countDownDate = new Date('{{end_time}}').getTime();
+            // Get todays date and time
+            let now = new Date('{{now_time}}').getTime();
+            // Update the count down every 1 second
+            let x = setInterval(function() {
+
+
+                // Find the distance between now an the count down date
+                let distance = countDownDate - now;
+
+                // Time calculations for days, hours, minutes and seconds
+                let days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                if (seconds < 10) seconds = "0" + seconds;
+                if (minutes < 10) minutes = "0" + minutes;
+                if (hours < 10) hours = "0" + hours;
+                // Output the result in an element with id="demo"
+                let message = "До конца соревнования ";
+                message += hours + ":"
+                + minutes + ":" + seconds;
+                document.getElementById("timer").innerHTML = message;
+                // If the count down is over, write some text
+                if (distance < 0) {
+                    clearInterval(x);
+                    document.getElementById("timer").innerHTML = "Соревнование завершилось";
+                }
+                now += 1000;
+            }, 1000);
+        </script>
+        <a href="../../results/{{ title }}">Результаты</a>
+        <table class="domino_table_task">
+            {% set rows = [0, 1, 2, 3] %}
+            {% for row in rows %}
+                <tr class="domino_row_task">
+                    {% for key in keys[row * 7: row * 7 + 7] %}
+                        {% set task = tasks[key] %}
+                        <td class="domino_col_task">
+                            {% if task['state'][-2:] == 'ok' %}
+                                {% if is_member %}
+                                    <div class="ok_task" title="Вы можете взять эту задачу">
+                                        <button class="btn btn-primary btn-lg btn-block" id="{{key}}" disabled>{{task['name']}}</button>
+                                    </div>
+                                {% else %}
+                                    <div class="ok_task" title="Вы можете взять эту задачу">
+                                        <button class="btn btn-primary btn-lg btn-block" id="{{key}}">{{task['name']}}</button>
+                                    </div>
+                                {% endif %}
+                            {% elif task['state'][-2:] == 'fs' %}
+                                {% if is_member %}
+                                    <div class="fs_task" title="У вас закончились попытки на сдачу этой задачи">
+                                        <button class="btn btn-danger btn-lg btn-block" id="{{key}}" disabled>{{task['name']}}</button>
+                                    </div>
+                                {% else %}
+                                    <div class="fs_task" title="У вас закончились попытки на сдачу этой задачи">
+                                        <button class="btn btn-danger btn-lg btn-block" id="{{key}}">{{task['name']}}</button>
+                                    </div>
+                                {% endif %}
+                            {% elif task['state'][-2:] == 'ff' %}
+                                {% if is_member %}
+                                    <div class="ff_task" title="У вас осталась 1 попытка на сдачу этой задачи">
+                                        <button class="btn btn-warning btn-lg btn-block" id="{{key}}" disabled>{{task['name']}}</button>
+                                    </div>
+                                {% else %}
+                                    <div class="ff_task" title="У вас осталась 1 попытка на сдачу этой задачи">
+                                        <button class="btn btn-warning btn-lg btn-block" id="{{key}}">{{task['name']}}</button>
+                                    </div>
+                                {% endif %}
+                            {% elif task['state'][-2:] == 'af' or task['state'][-2:] == 'as' %}
+                                {% if is_member %}
+                                    <div class="accepted_task" title="Вы решили эту задачу">
+                                        <button class="btn btn-success btn-lg btn-block" id="{{key}}" disabled>{{task['name']}}</button>
+                                    </div>
+                                {% else %}
+                                    <div class="accepted_task" title="Вы решили эту задачу">
+                                        <button class="btn btn-success btn-lg btn-block" id="{{key}}">{{task['name']}}</button>
+                                    </div>
+                                {% endif %}
+                            {% elif task['state'][-2:] in ['cf', 'cs'] %}
+                                {% if is_member %}
+                                    <div class="ab_task" title="Задача проверяется">
+                                        <button class="btn btn-secondary btn-lg btn-block" id="{{key}}" disabled>{{task['name']}}</button>
+                                    </div>
+                                {% else %}
+                                    <div class="ab_task" title="Задача проверяется">
+                                        <button class="btn btn-secondary btn-lg btn-block" id="{{key}}">{{task['name']}}</button>
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                {% if is_member %}
+                                    <div class="ab_task" title="Все экземпляры этой задачи сейчас 'на руках' у других участников">
+                                    <button class="btn btn-secondary btn-lg btn-block" id="{{key}}" disabled>{{task['name']}}</button>
+                                </div>
+                                {% else %}
+                                    <div class="ab_task" title="Все экземпляры этой задачи сейчас 'на руках' у других участников">
+                                        <button class="btn btn-secondary btn-lg btn-block" id="{{key}}">{{task['name']}}</button>
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+
+                            <script>
+                                send{{key}} = function() {
+                                    $.post('/game/{{ title }}', {'picked':
+                                            '{{task['name']}}'}).done(
+                                                                    function() {
+                                                                        window.location.reload()
+                                                                    });
+
+                                }
+                                document.getElementById('{{key}}').onclick = send{{key}};
+                            </script>
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </table>
+        {% if message %}
+            <h2>{{message}}</h2>
+        {% endif %}
+        {% set number = ['0', '1'] %}
+        <div class="row">
+            {% for j in range(number_of_picked_tasks) %}
+                {% set task = picked_tasks[j] %}
+                {% set i = number[j] %}
+                {% set submit = "submit" + i %}
+                {% set answer = 'answer' + i %}
+                <div class="col">
+                    <div>
+                        <a>{{task['name']}}</a>
+                        <br>
+                        <div>
+                            <p id="condition" style="border:1px solid; padding: 3px; width:50%; margin-top:5px">
+                                {{ task['condition'] }}
+                            </p>
+                        </div>
+                            <div class="form-group">
+                                <input id="{{answer}}" class="form-control" type="text" placeholder="Введите Ваш ответ" name="answer">
+                            </div>
+                            {% if is_member %}
+                                <button id="{{submit}}" class="btn btn-primary" type="submit" disabled>Отправить</button>
+                            {% else %}
+                                <button id="{{submit}}" class="btn btn-primary" type="submit">Отправить</button>
+                            {% endif %}
+                            <script>
+                                send{{i}} = function() {
+                                    let task_answer = document.getElementById('{{answer}}').value;
+                                    $.post('/game/{{ title }}',
+                                        {name: '{{task['name']}}', answer: task_answer}).done(
+                                                            function() {
+                                                                window.location.reload()
+                                                            });
+                                }
+                                document.getElementById('{{submit}}').onclick = send{{i}};
+                            </script>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}
