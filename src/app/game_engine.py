@@ -2,7 +2,7 @@ from src.Globals import Constants as Consts
 from src.app.models import get_tasks_info, update_tasks_info
 
 
-class GameEngine():
+class GameEngine:
     def create_tasks_for_render(self):
         self.tasks = dict()
         for key in Consts.TASKS_KEYS[self.game.game_type]:
@@ -35,6 +35,14 @@ class GameEngine():
         self.picked_tasks = None
         self.keys_of_picked_tasks = None
         self.create_picked_tasks()
+
+    def get_info(self):
+        result = {"tasks": self.tasks,
+                  "picked_tasks": self.picked_tasks,
+                  "message": self.message,
+                  "number_of_picked_tasks": len(self.picked_tasks),
+                  "info": self.numbers_of_sets}
+        return result
 
 
 def get_state(state):
@@ -184,3 +192,12 @@ class PenaltyEngine(GameEngine):
 
     def __init__(self, game, team):
         super().__init__(game, team)
+
+
+def create_engine(game, team):
+    result = None
+    if game.game_type == "domino":
+        result = DominoEngine(game, team)
+    elif game.game_type == "penalty":
+        result = PenaltyEngine(game, team)
+    return result

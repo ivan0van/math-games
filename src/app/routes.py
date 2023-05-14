@@ -7,7 +7,7 @@ from src.app import login_manager
 from src.app.forms import *
 from src.app.models import *
 
-from src.app.game_engine import DominoEngine, PenaltyEngine
+from src.app.game_engine import create_engine
 
 DICT_OF_FORMS = {'tasks': GameTasksInfoForm,
                  'common': GameCommonInfoForm,
@@ -135,7 +135,6 @@ def profile_user():
                      "rights": current_user.rights_list,
                      "dict_of_rights": Consts.DICT_OF_RIGHTS}
     render_params.update(current_user.get_general_info())
-    print(render_params)
     return render_template("profile_teams.html", **render_params)
 
 
@@ -174,7 +173,6 @@ def article_common():
                               Consts.DICT_OF_HUMAN_FORMAT[game.game_format],
                               'register': register}
         new_formatted_game.update(game.get_common_info())
-        print(datetime.today(), game.end_time_datetime)
         if (register or current_user.can_register_for_game(game)) \
                 and game.end_time_datetime > datetime.today() \
                 and not game.is_private:
@@ -280,7 +278,6 @@ def create_task(hidden, condition, solution, answer, position, value, author,
                 game):
     if not is_auth():
         return redirect("/login")
-    print(hidden)
     task = Task(hidden, solution, author)
     for ans in answer.split('|'):
         task.set_ans(ans)
@@ -354,6 +351,10 @@ def task(task_id):
     return render_template("task.html", **params)
 
 
+def get_js_format_time(time):
+    return datetime.strftime(time, Consts.TIME_FORMAT_FOR_JS)
+
+
 @app.route("/game/<game_title>", methods=["GET", "POST"])
 def game(game_title):
     if not is_auth():
@@ -374,43 +375,30 @@ def game(game_title):
     status = game.get_status(time)
     html_page = Consts.DICT_OF_GAME_PAGES[game.type]
     render_params = {"title": game_title, "status": status,
-                     "start_time": datetime.strftime(game.start_time_datetime,
-                                                     Consts.TIME_FORMAT_FOR_JS),
-                     "end_time": datetime.strftime(game.end_time_datetime,
-                                                   Consts.TIME_FORMAT_FOR_JS),
-                     "now_time": datetime.strftime(time,
-                                                   Consts.TIME_FORMAT_FOR_JS)}
-    if game.type == 'domino':
-        game_engine = DominoEngine(game, current_team)
-    else:
-        game_engine = PenaltyEngine(game, current_team)
+                     "start_time": get_js_format_time(game.start_time_datetime),
+                     "end_time": get_js_format_time(game.end_time_datetime),
+                     "now_time": get_js_format_time(time)}
+    game_engine = create_engine(game, current_team)
     if status == 'not_started':
         return render_template(html_page, **render_params)
-    elif status == 'ended':
+    if status == 'ended':
         return render_template("game_ended.html", **render_params)
-    else:
-        if request.method == "POST":
-            if request.form.get("picked") and is_captain:
-                game_engine.pick_task(request.form.get("picked"))
-            elif request.form.get('answer') and is_captain:
-                game_engine.handle_answer(request.form.get("name"),
-                                          request.form.get("answer"))
-            else:
-                return render_template('error.html',
-                                       message='У вас нет прав на сдачу задач',
-                                       last=f'../game/{game_title}')
-        other_params = {"tasks": game_engine.tasks,
-                        "keys": Consts.TASKS_KEYS[game.type],
-                        "picked_tasks": game_engine.picked_tasks,
-                        "message": game_engine.message,
-                        "state": status,
-                        "number_of_picked_tasks": len(game_engine.picked_tasks),
-                        "is_member": not is_captain,
-                        "title": game.title,
-                        "info": game_engine.numbers_of_sets,
-                        "block": ""}
-        render_params.update(other_params)
-        return render_template(html_page, **render_params)
+    if request.method == "POST":
+        if request.form.get("picked") and is_captain:
+            game_engine.pick_task(request.form.get("picked"))
+        elif request.form.get('answer') and is_captain:
+            game_engine.handle_answer(request.form.get("name"),
+                                      request.form.get("answer"))
+        else:
+            return render_template('error.html', last=f'/game/{game_title}',
+                                   message='У вас нет прав на сдачу задач')
+    other_params = {"keys": Consts.TASKS_KEYS[game.type],
+                    "state": status,
+                    "is_member": not is_captain,
+                    "title": game.title}
+    render_params.update(other_params)
+    render_params.update(game_engine.get_info())
+    return render_template(html_page, **render_params)
 
 
 def get_point(state):
@@ -438,11 +426,6 @@ def results(game_title):
     team = ''
     if is_auth() and current_team is not None:
         team = current_team
-    titles = {'domino': 'Домино', 'penalty': 'Пенальти'}
-    info = Consts.TASKS_POSITIONS_BY_KEYS[game.game_type]
-    keys = Consts.TASKS_KEYS[game.game_type]
-    number = Consts.GAMES_DEFAULT_TASK_NUMBERS[game.game_type]
-
     results = get_results(game.id)
     numbers_of_solved = []
     step = 1
@@ -452,13 +435,14 @@ def results(game_title):
             if get_point(state) > 0:
                 x += 1
         numbers_of_solved.append(x)
-    team_num = len(results)
-    print(game_title, f"/game/{game_title}")
-    return render_template("results.html", team=team, results=results,
-                           title=titles[game.game_type],
-                           info=info, number=number, team_num=team_num,
-                           keys=keys, numbers_of_solved=numbers_of_solved,
-                           to_game=f"/game/{game_title}")
+    render_params = {"team": team, "results": results, "team_num": len(results),
+                     "numbers_of_solved": numbers_of_solved,
+                     "title": Consts.TITLES_DICT[game.type],
+                     "keys": Consts.TASKS_KEYS[game.type],
+                     "number": Consts.GAMES_DEFAULT_TASK_NUMBERS[game.type],
+                     "info": Consts.TASKS_POSITIONS_BY_KEYS[game.type],
+                     "to_game": f"/game/{game_title}"}
+    return render_template("results.html", **render_params)
 
 
 ''' ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ '''

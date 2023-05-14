@@ -119,7 +119,7 @@ class Constants(object):
                 }
     GAMES_DICT = [('domino', 'Домино'),
                   ('penalty', 'Пенальти')]
-
+    TITLES_DICT = {'domino': 'Домино', 'penalty': 'Пенальти'}
     DICT_OF_HUMAN_FORMAT = {'open': 'открытая',
                             'private': 'закрытая',
                             'domino': 'Домино',

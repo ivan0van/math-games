@@ -58,12 +58,10 @@ class Task(db.Model):
         self.author_id = author.id
 
     def set_ans(self, ans):
-        print('new_ans', ans, generate_password_hash(ans))
         if self.hashed_answer is None:
             self.hashed_answer = generate_password_hash(ans)
         else:
             self.hashed_answer += '|' + generate_password_hash(ans)
-        print('result', self.hashed_answer)
 
     def check_ans(self, ans):
         hashed_answers = self.hashed_answer.split('|')
@@ -366,7 +364,6 @@ def create_tasks_tables(game_id, tasks_number):
         def __init__(self, kwargs):
             for item in kwargs.items():
                 setattr(self, item[0], item[1])
-
     metadata.create_all(engine)
     orm.mapper(Tasks, numbers_of_sets_table)
     _session = orm.sessionmaker(bind=engine)
@@ -381,23 +378,23 @@ def create_tasks_tables(game_id, tasks_number):
 
 
 def add_user_to_game_table(login, game_id):
-    session, UserTasks = get_session_for_game_table(game_id, "states")
+    session, user_tasks = get_session_for_game_table(game_id, "states")
     game = db.session.query(Game).filter(Game.id == game_id).first()
     dict_of_attr = {'login': login}
     if game.game_type == 'domino':
         dict_of_attr['picked_tasks'] = ''
     for i in range(1, game.tasks_number + 1):
         dict_of_attr[f't{i}'] = '0ok'
-    user = UserTasks(dict_of_attr)
+    user = user_tasks(dict_of_attr)
     session.add(user)
     session.commit()
 
 
 def get_results(game_id):
-    session, UserTasks = get_session_for_game_table(game_id, "states")
+    session, user_tasks = get_session_for_game_table(game_id, "states")
     game = db.session.query(Game).filter(Game.id == game_id).first()
     result = []
-    users_states = session.query(UserTasks).filter(True).all()
+    users_states = session.query(user_tasks).filter(True).all()
     for user_states in users_states:
         new_result = []
         s = 0
@@ -410,7 +407,6 @@ def get_results(game_id):
         new_result.append(title)
         for i in range(1, game.tasks_number + 1):
             new_result.append(getattr(user_states, f't{i}'))
-            print(user_states)
             s += int(new_result[-1][:-2])
         new_result.append(s)
         result.append(new_result)
@@ -419,12 +415,12 @@ def get_results(game_id):
 
 
 def get_tasks_info(table_title, game_id, login=None):
-    session, UserTasks = get_session_for_game_table(game_id, table_title)
+    session, user_tasks = get_session_for_game_table(game_id, table_title)
     game = db.session.query(Game).filter(Game.id == game_id).first()
     result = dict()
     if login is not None:
-        user_states = session.query(UserTasks).filter(UserTasks.login
-                                                      == login).first()
+        user_states = session.query(user_tasks).filter(user_tasks.login
+                                                       == login).first()
         if game.game_type == 'domino':
             result['picked_tasks'] = getattr(user_states,
                                              'picked_tasks').split()
@@ -433,7 +429,7 @@ def get_tasks_info(table_title, game_id, login=None):
         for i in range(1, game.tasks_number + 1):
             result[f't{i}'] = getattr(user_states, f't{i}')
     else:
-        tasks = session.query(UserTasks).filter(True).all()
+        tasks = session.query(user_tasks).filter(True).all()
         for task in tasks:
             result[task.key] = {'number_of_sets': task.number_of_sets}
             result[task.key]['current_checking_id'] = task.current_checking_id
@@ -458,18 +454,18 @@ def get_session_for_game_table(game_id, table_title):
 
 
 def update_tasks_info(table_title, game_id, changes, login=None):
-    session, UserTasks = get_session_for_game_table(game_id, table_title)
+    session, user_tasks = get_session_for_game_table(game_id, table_title)
     if login is not None:
-        user_states = session.query(UserTasks).filter(UserTasks.login
-                                                      == login).first()
+        user_states = session.query(user_tasks).filter(user_tasks.login
+                                                       == login).first()
         for state in changes.items():
             setattr(user_states, state[0], state[1])
         session.commit()
     else:
 
         for change in changes.items():
-            task = session.query(UserTasks).filter(UserTasks.key ==
-                                                   change[0]).first()
+            task = session.query(user_tasks).filter(user_tasks.key ==
+                                                    change[0]).first()
             for attr in change[1].items():
                 setattr(task, attr[0], attr[1])
             session.commit()
