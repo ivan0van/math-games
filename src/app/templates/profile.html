@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{# Шаблон для отображения страницы "Профиль" #}
+
+{% block content %}
+    <div>
+        <div class="row">
+            <div class="col">
+                <b>{{ login }}</b>
+            </div>
+            <div class="col">
+                <a href="/logout" type="button" class="btn btn-primary">Выйти из
+                аккаунта</a>
+        <br>
+            </div>
+        </div>
+        <p>
+            <b>{{ name }} {{ surname }} {{ last_name }}</b>
+        </p>
+    </div>
+    <div class="row">
+        {% for right in rights %}
+            <div class="col">
+                <a href="/profile/{{ right }}">{{ dict_of_rights[right] }}</a>
+            </div>
+        {% endfor %}
+    </div>
+    {% block section %}
+    {% endblock %}
+{% endblock %}

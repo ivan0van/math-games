@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Название игры</th>
+                <th scope="col">Тип игры</th>
+                <th scope="col">Формат игры</th>
+                <th scope="col">Начало игры</th>
+                <th scope="col">Конец игры</th>
+                <th scope="col">Действие</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for game in games %}
+            <tr>
+                <th scope="col">
+                    <h4>{{ game['title'] }}</h4>
+                </th>
+                <th scope="col">
+                    {{ game['game_type_human_format'] }}
+                </th>
+                <th>
+                    {{ game['game_format_human_format'] }}
+                </th>
+                <th scope="col">
+                    {{game['start_time']}}
+                </th>
+                <th scope="col">
+                    {{game['end_time']}}
+                </th>
+                <th scope="col">
+                    {% if game['register'] %}
+                    <a href="/game/{{ game['title'] }}">
+                        Перейти к игре
+                    </a>
+                    {% else %}
+                        <a href="/registration_to_game/{{ game['title'] }}">
+                            Зарегистрироваться на игру
+                        </a>
+                    {% endif %}
+                </th>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

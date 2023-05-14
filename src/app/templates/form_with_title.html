@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% import 'macros.html' as macros %}
+{% block content %}
+    {% if error is defined %}
+        {{ macros.form_with_title(form, title, error=error) }}
+    {% else %}
+        {{ macros.form_with_title(form, title) }}
+    {% endif %}
+{% endblock %}
